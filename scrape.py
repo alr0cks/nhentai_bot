@@ -1,78 +1,46 @@
-import requests
-from bs4 import BeautifulSoup
-import re
-
-url = "https://nhentai.net/g/39471/"
-r = requests.get(url)
-soup = BeautifulSoup(r.text, 'html.parser')
+from string import Template
 
 
-def get_info(soup, url):
-    title1 = soup.find('h1').text   #title
-    title2 = soup.find('h2').text   #title in japnese
-    article = soup.find("h3",{"id":"gallery_id"}).text      #hash id
+def get_info(soup):
+    title = soup.find('h1').text  # title
+    title_jap = soup.find('h2').text  # title in japnese
+    article = soup.find("h3", {"id": "gallery_id"}).text  # hash id
 
-    content = soup.find_all("div",{"class":"tag-container"})    #scrape tag container
-    
-    Parodies = get_content(content, 0)
-    Characters = get_content(content, 1)
-    Tags = get_content(content, 2)
-    Artist = get_content(content, 3)
-    Groups = get_content(content, 4)
-    Languages = get_content(content, 5)
-    Categories = get_content(content, 6)
-    Pages = get_content(content, 7)
-    img_list = []
+    thumbnail = soup.find("meta", {"itemprop": "image"})
+    gallery_id = thumbnail.get('content').split("/")[-2]
 
-    for i in range(1,int(Pages[0])):             #get images url
-        new_url = url + str(i)
-        # print(new_url)
-        img_list.append(get_image(new_url))
-    
-    # print("Parodies: {}".format(', '.join(Parodies)))
-    # print("Characters: {}".format(', '.join(Characters)))
-    # print("Tags: {}".format(', '.join(Tags)))
-    # print("Artist: {}".format(', '.join(Artist)))
-    # print("Groups: {}".format(', '.join(Groups)))
-    # print("Languages: {}".format(', '.join(Languages)))
-    # print("Categories: {}".format(', '.join(Categories)))
-    # print("Pages: {}".format(', '.join(Pages)))
-    # # print("Images: {}".format(', '.join(img_list)))
+    content = soup.find_all("div", {"class": "tag-container"})  # scrape tag container
 
-    temp = "Parodies: {}".format(', '.join(Parodies) + "\n" + "Characters: {}".format(', '.join(Characters))) + "\n" + "Artist: {}".format(', '.join(Artist)) + "\n" + "Tags: {}".format(', '.join(Tags)) + "\n" + "Groups: {}".format(', '.join(Groups)) + "\n" + "Languages: {}".format(', '.join(Languages)) + "\n" + "Categories: {}".format(', '.join(Categories)) + "\n" + "Pages: {}".format(', '.join(Pages)) + "\n" + "Images: {}".format(', '.join(img_list))
-    # print(temp)
+    parodies = get_content(content, 0)
+    characters = get_content(content, 1)
+    tags = get_content(content, 2)
+    artist = get_content(content, 3)
+    groups = get_content(content, 4)
+    languages = get_content(content, 5)
+    categories = get_content(content, 6)
+    pages = get_content(content, 7)
 
-    return temp
-       
-    
+    image_template = Template('<img src="https://i.nhentai.net/galleries/$gallery_id/$page_no.jpg">')
+
+    image_tags = ""
+
+    for page_no in range(1, int(pages.replace("#", ""))):
+        image_tags += image_template.substitute({'gallery_id': gallery_id, 'page_no': page_no}) + "\n"
+
+    return title, title_jap, article, parodies, characters, tags, artist, groups, languages, categories, image_tags
 
 
 def get_content(content, id):
-    info = content[id].find_all("span",{"class":"name"})
-    list = []
-    for i in range(len(info)):
-        list.append(info[i].text)
+    info = content[id].find_all("span", {"class": "name"})
 
-    # print(list)
-    if not list:
+    items = []
+    for i in range(len(info)):
+        items.append(info[i].text)
+
+    if not items:
         return None
     else:
-        return list
-    # return list
-
-def get_image(url):
-    r = requests.get(url)
-    soup_img = BeautifulSoup(r.text, 'html.parser')
-    images = soup_img.find_all('img', {'src':re.compile('.jpg')})
-    for image in images: 
-        # print(image['src'])
-        return (image['src'])
-
-
-     
-    
-
-# info = get_info(soup,url)
-# print(info)
-
-    
+        res = ""
+        for item in items:
+            res += f"#{item} "
+        return res.strip()
