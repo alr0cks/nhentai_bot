@@ -42,5 +42,5 @@ def get_content(content, id):
     else:
         res = ""
         for item in items:
-            res += f"#{item} "
+            res += f"#{item.replace(' ', '_').replace('-', '_')} "
         return res.strip()
