@@ -1,12 +1,14 @@
 from string import Template
-
+from bs4 import BeautifulSoup
+import requests
 
 def get_info(digits):
     # generate soup object for doujin
     soup = BeautifulSoup(requests.get(f"https://nhentai.net/g/{digits}/").text, 'html.parser')
 
     title = soup.find('h1').text  # title
-
+    title_jap = soup.find('h2').text  # title in japnese
+    article = soup.find("h3", {"id": "gallery_id"}).text  # hash id
     # get gallery ID for the doujin pages
     thumbnail = soup.find("meta", {"itemprop": "image"})
     gallery_id = thumbnail.get('content').split("/")[-2]
@@ -36,9 +38,11 @@ def get_info(digits):
     return (
         title,
         {
-            'Tags': tags,
+            'Title' : title_jap,
+            'Article' : article,
             'Parodies': parodies,
             'Characters': characters,
+            'Tags': tags,
             'Artists': artist,
             'Groups': groups,
             'Languages': languages,
