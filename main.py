@@ -13,10 +13,6 @@ if not args.source:
     print("Please provide source to scrape")
     exit(1)
 
-url = f"https://nhentai.net/g/{args.source}/"
-r = requests.get(url)
-soup = BeautifulSoup(r.text, 'html.parser')
-
 (
     title,
     title_jap,
@@ -29,15 +25,14 @@ soup = BeautifulSoup(r.text, 'html.parser')
     languages,
     categories,
     image_tags,
-) = scrape.get_info(soup)
+) = scrape.get_info(source)
 
 telegraph = Telegraph()
 
-telegraph.create_account(short_name='1337')
+telegraph.create_account(short_name='nhentai_bot')
+article_path = telegraph.create_page(title, html_content=image_tags)['path']
 
-response = telegraph.create_page(str(title), html_content=image_tags,)
-
-print('https://telegra.ph/{}'.format(response['path']))
+print('https://telegra.ph/{}'.format(article_path))
 print("title :", title)
 print("title_jap :", title_jap)
 print("article :", article)
